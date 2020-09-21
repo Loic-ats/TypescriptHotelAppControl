@@ -1,32 +1,45 @@
-//const request = require('request');
-import request from 'request';
+import { promises } from 'fs';
+import request, { RequestPromiseAPI } from 'request-promise-native';
+import { Client } from './domains';
 
-export class Service {
+interface ClientBack {
+    uuid: string;
+    nom: string;
+    prenoms: string;
+}
 
-    listerClients(): any {
+class Service {
 
-        return new Promise((resolve, reject) => {
+    request: RequestPromiseAPI;
 
-            request('http://localhost:8080/clients?start=0&size=10', { json: true }, (err, res, body) => {
-                if (err) { reject(err); }
-                else { resolve(body); }
-            });
-        });
+    constructor() {
+        this.request = request;
+    }
+
+    listerClient(): Promise<Client[]> {
+        return this.request.get('https://hotel-web-api-spring.herokuapp.com/clients', { json: true })
+            .then((result: ClientBack[]) => result.map(clientBack => new Client(clientBack.uuid, clientBack.nom, clientBack.prenoms)));
+
     }
 
 
-    ajouterClient(saisieNom?: any, saisiePrenom?: any): any {
+    findByName(nomAChercher: string): Promise<Client[]> {
+        return this.request.get(`https://hotel-web-api-spring.herokuapp.com/clients/nom=${nomAChercher}`, { json: true })
+            .then((result: ClientBack[]) => result.map(clientBack => new Client(clientBack.uuid, clientBack.nom, clientBack.prenoms)));
+    }
 
-        return new Promise((resolve, reject) => {
-            request.post({
-                url: 'http://localhost:8080/clients',
-                method: 'POST',
-                json: { nom: `${saisieNom}`, prenoms: `${saisiePrenom}` }
-            }, (err, res, body) => {
-                if (err) { reject(err); }
-                else { resolve(body); }
-            });
+    posterClient(saisieNom: string, saisiePrenom: string): Promise<void> {
+        return this.request.post({
+            url: 'https://hotel-web-api-spring.herokuapp.com/clients',
+            method: 'POST',
+            json: {
+                nom: saisieNom,
+                prenoms: saisiePrenom
+            }
         });
     }
 
 }
+
+export { Service };
+

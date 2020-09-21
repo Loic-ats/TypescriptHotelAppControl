@@ -1,68 +1,104 @@
+import { Service } from "./service";
 import readline from 'readline';
-import { Service } from './service.js';
+import { Client } from './domains';
 
+const monService = new Service();
 
+// création d'un objet `rl` permettant de récupérer la saisie utilisateur
 const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout
 });
 
-export class Presentation {
-    private service;
-    constructor() {
-        this.service = new Service();
+class Presentation {
+
+    monService: Service;
+
+    constructor(service: Service) {
+        this.monService = service;
     }
 
     start() {
-        console.log(`
-        1. Lister les clients
-        2. Ajouter un client
-        3. Rechercher un client par nom
-        4. Vérifier la disponibilité d'une chambre
-        99. Sortir`);
 
-        rl.question('Votre choix : ', saisie => {
+        console.log('** Administration Hotel **');
+        console.log("1. Lister les clients");
+        console.log("2. Ajouter un client");
+        console.log("3. Rechercher un client par nom");
+        console.log("4. Vérifier la disponibilité d'une chambre");
+        console.log("99. Sortir\n");
+
+        // récupération de la saisie utilisateur
+        rl.question("Choisissez un numéro : ", (saisie: string) => {
+
             switch (saisie) {
-                case '1':
-                    console.log('>> Liste des clients');
-                    const listeClients$: any = this.service.listerClients();
-                    listeClients$
-                        .then((clients: any) => {
-                            console.log(clients.map((client: any) => `${client.nom} ${client.prenoms}`).join('\n'));
-                            console.log('\n');
-                        }
-                        )
-                        .catch((err: any) => console.log('La liste des clients n\'est pas accessible.'))
-                        .finally(() => this.start());
-                    break;
-                case '2':
-                    console.log('>> Ajout d\'un nouveau client')
-                    const ajoutClient$ = this.service.ajouterClient();
-                    rl.question('Saisissez le nom du nouveau client : ', saisieNom => {
-                        rl.question('Saisissez le prénom du nouveau client : ', saisiePrenom => {
-                            ajoutClient$
-                                .then(console.log(`${saisieNom} ${saisiePrenom} a correctement été ajouté(e) à la base.`))
-                                .catch((err: any) => console.log('Le client n\'a pas été ajouté à la base.'))
-                                .finally(() => this.start());
+                case "1":
+                    console.log("\n>> Liste des clients\n");
+
+                    monService.listerClient()
+                        .then(listClients => console.log(
+                            listClients
+                                .map(client => client.toString())
+                                .join('\n')
+                        ))
+                        .catch((err: string) => console.log(err))
+                        .finally(() => {
+                            console.log("\r");
+                            this.start();
                         })
-                    });
+
                     break;
-                case '3':
-                    console.log('Cette fonction n\'est pas encore disponible, merci de revenir ultérieurement')
+
+                case "2":
+                    console.log("\n>> Ajouter un client\n");
+                    rl.question("Entrez un Nom : ", (saisieNom: string) => {
+                        rl.question("Entrez un Prenom : ", (saisiePrenom: string) => {
+                            monService.posterClient(saisieNom, saisiePrenom)
+                                .then(() => console.log(`${saisieNom} ${saisiePrenom} a été ajouté !`))
+                                .catch((err: string) => console.log(err))
+                                .finally(() => {
+                                    console.log("\r");
+                                    this.start();
+                                })
+                        })
+                    })
+
+                    break;
+
+                case "3":
+                    console.log("\n>> Rechercher un client par nom\n");
+
+                    rl.question("Entrez le Nom à chercher: ", (saisieNom: string) => {
+                        monService.findByName(saisieNom)
+                            .then((clients: Client[]) => console.log(
+                                clients
+                                    .map(client => client.toString())
+                                    .join('\n')
+                            ))
+                            .catch((err: string) => console.log(err))
+                            .finally(() => {
+                                console.log("\r");
+                                this.start();
+                            })
+                    })
+                    break;
+
+                case "4":
+                    console.log("\n>> Vérifier la disponibilité d'une chambre\n");
+                    console.log("\nComing soon!\n");
                     this.start();
                     break;
-                case '4':
-                    console.log('Cette fonction n\'est pas encore disponible, merci de revenir ultérieurement')
-                    this.start();
-                    break;
-                case '99':
-                    console.log('Au revoir !');
-                    rl.close();
-                    break;
+
+                case "99":
+                    console.log("\nAurevoir !");
+                    process.exit();
+
                 default:
-                    console.log('La saisie n\'est pas bonne');
+                    console.log("\nTU SAIS PAS LIRE? 1, 2, 3, 4 ou 99 ! Retry =>")
                     this.start();
+                    break;
             }
-        })
+        });
     }
 }
+
+export { Presentation };

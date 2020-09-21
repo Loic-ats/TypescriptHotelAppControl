@@ -1,9 +1,8 @@
-import { Presentation } from './presentation.js';
+import { Presentation } from "./presentation"; // require
+import { Service } from "./service"; // require
 
-//const { Presentation } = require("./presentation")
-// const { Service } = require('./service');
-console.log('** Administration Hotel **');
+const service = new Service();
+const presentation = new Presentation(service);
 
-
-const presentation = new Presentation();
 presentation.start();
+
